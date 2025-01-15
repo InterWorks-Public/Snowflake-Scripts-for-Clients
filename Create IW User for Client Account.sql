@@ -17,8 +17,7 @@
 -- This script requires an active warehouse
 -- so that it can perform certain activities
 -- such as generating a random password and
--- retrieving the connection string.
--- If you have not already 
+-- retrieving the connection string. 
 
 use role "SYSADMIN";
 
