@@ -4,64 +4,53 @@
 ----------------------------------- INTERWORKS ACCESS -----------------------------------
 -----------------------------------------------------------------------------------------
 
----------------------------------------
--- Required variables
-
--- Please populate the following variables
--- as best you can.
-
----- Account Identifier
-
--- Account identifier for your Snowflake account,
--- which should be visible within the URL of your
--- current browser page when interacting with
--- Snowflake. More information can be found here:
--- https://docs.snowflake.com/en/user-guide/admin-account-identifier
-
--- If you are unsure, any of the following examples
--- provide InterWorks with the information needed:
--- - client-account
--- - https://client-account.snowflakecomputing.com
--- - account.region
--- - https://account.region.snowflakecomputing.com
--- - https://app.snowflake.com/region/account
-
-set account_identifier = '';
-
----- Password
-
--- To ensure security, we request that clients
--- set the original password for the InterWorks
--- service account themselves. Once InterWorks
--- have accessed the account, the password
--- will then be changed and multi-factor
--- authentication will be added
-
-set password = '';
-
----------------------------------------
--- Automated script begins here
-
--- From this point, this script is
+-- This automated deployment script is
 -- designed to be executed without
--- any further modifications.
+-- any modifications.
 -- Please execute the script in full
 -- and send the final output to your
 -- InterWorks contact
 
-use role SECURITYADMIN;
+---------------------------------------
+-- Note on warehouse
+
+-- This script requires an active warehouse
+-- so that it can perform certain activities
+-- such as generating a random password and
+-- retrieving the connection string.
+-- If you have not already 
+
+use role "SYSADMIN";
+
+create warehouse if not exists "WH_ADMIN"
+  comment = 'Warehouse for admin-level activities'
+;
+grant usage on warehouse "WH_ADMIN" to role "SECURITYADMIN";
 
 ---------------------------------------
 -- Automated user creation
 
+use role "SECURITYADMIN";
+
 set username = 'INTERWORKS_ADMIN';
 
-set snowflake_account = (select current_account());
-set snowflake_region = (select current_region());
+set connection_string = (
+  select lower(replace(
+      concat(
+          current_organization_name()
+        , '-'
+        , current_account_name()
+        , '.snowflakecomputing.com'
+      )
+    , '_', '-'
+  ))
+)
+;
 
 set first_name = 'InterWorks';
 set last_name = 'Admin account';
 set comment = 'Admin user for InterWorks - Snowflake services partner';
+set password = (select randstr(30, random()));
 
 create user if not exists identifier($username) 
   password = $password
@@ -74,14 +63,14 @@ alter user identifier($username) set
   must_change_password = TRUE
 ;
 
--- Grant securityadmin access
-grant role securityadmin to user identifier($username);
+-- Grant SECURITYADMIN access
+grant role "SECURITYADMIN" to user identifier($username);
 
 ---- View output
 
-DESCRIBE USER identifier($username);
+describe user identifier($username);
 
-SELECT 
+select 
     $username as username
   , $password as password
 ;
@@ -89,10 +78,9 @@ SELECT
 -- Paste-able text to the user in slack
 select concat(
     'Here are the details to send to your InterWorks contact:' || '\n'
-  , 'Account idenfifier: ' || $account_identifier || '\n'
+  , 'Connection string: ' || $connection_string || '\n'
   , 'Username: `' || $username || '`\n'
   , 'Password: `' || $password || '`\n'
-  , 'Snowflake account: `' || $snowflake_account || '`\n'
-  , 'Snowflake region: `' || $snowflake_region || '`\n'
+  , 'You will need to change your password through the UI before connecting to Snowflake elsewhere.' || '\n'
   ) as details
 ;
