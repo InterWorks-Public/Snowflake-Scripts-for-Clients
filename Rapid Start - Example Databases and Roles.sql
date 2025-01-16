@@ -22,6 +22,23 @@ create role if not exists "DATA_PLATFORM_MANAGER"
   comment = 'Main role for owning all main databases in the account. Does not manage some admin-level databases'
 ;
 
+-- Domain-agnostic
+create role if not exists "ENGINEER"
+  comment = 'Role for the core data engineers'
+;
+
+create role if not exists "ANALYST"
+  comment = 'Role for the core data analysts'
+;
+
+create role if not exists "READER"
+  comment = 'Read-only role for core general users'
+;
+
+create role if not exists "METADATA"
+  comment = 'Metadata-only role for core metadata-driven functionality'
+;
+
 -- Domain A
 create role if not exists "ENGINEER_DOMAIN_A"
   comment = 'Role for the data engineers that belong to domain A'
@@ -61,6 +78,12 @@ create role if not exists "METADATA_DOMAIN_B"
 
 grant role "DATA_PLATFORM_MANAGER" to role "SYSADMIN";
 
+-- Domain-agnostic
+grant role "METADATA" to role "READER";
+grant role "READER" to role "ANALYST";
+grant role "ANALYST" to role "ENGINEER";
+grant role "ENGINEER" to role "DATA_PLATFORM_MANAGER";
+
 -- Domain A
 grant role "METADATA_DOMAIN_A" to role "READER_DOMAIN_A";
 grant role "READER_DOMAIN_A" to role "ANALYST_DOMAIN_A";
@@ -76,6 +99,10 @@ grant role "ENGINEER_DOMAIN_B" to role "DATA_PLATFORM_MANAGER";
 -- Account role hierarchy representation:
 
 -- - DATA_PLATFORM_MANAGER
+--   - ENGINEER
+--     - ANALYST
+--       - READER
+--         - METADATA
 --   - ENGINEER_DOMAIN_A
 --     - ANALYST_DOMAIN_A
 --       - READER_DOMAIN_A
@@ -147,6 +174,19 @@ create schema if not exists "SILVER"."DOMAIN_B"
 
 create schema if not exists "GOLD"."DOMAIN_B"
   comment = 'Gold tier schema for data that is ready for analytics and other downstream purposes related to domain B'
+;
+
+-- Domain C
+create schema if not exists "BRONZE"."DOMAIN_C"
+  comment = 'Bronze tier schema for raw and unmanaged data related to domain C'
+;
+
+create schema if not exists "SILVER"."DOMAIN_C"
+  comment = 'Silver tier schema for cleaned data related to domain C'
+;
+
+create schema if not exists "GOLD"."DOMAIN_C"
+  comment = 'Gold tier schema for data that is ready for analytics and other downstream purposes related to domain C'
 ;
 
 -------------------------
@@ -344,6 +384,81 @@ create database role if not exists "GOLD"."SC__DOMAIN_B__METADATA"
 grant database role "GOLD"."SC__DOMAIN_B__METADATA" to database role "GOLD"."DB__METADATA";
 grant database role "GOLD"."SC__DOMAIN_B__METADATA" to database role "GOLD"."SC__DOMAIN_B__READER";
 
+-------------------------
+-- Databases roles - Schema-level - Domain C
+
+-- Bronze - Schema - Domain C
+create database role if not exists "BRONZE"."SC__DOMAIN_C__OWNER"
+  comment = 'Full access to the schema'
+;
+grant database role "BRONZE"."SC__DOMAIN_C__OWNER" to database role "BRONZE"."DB__OWNER";
+
+create database role if not exists "BRONZE"."SC__DOMAIN_C__WRITER"
+  comment = 'Write access to the schema'
+;
+grant database role "BRONZE"."SC__DOMAIN_C__WRITER" to database role "BRONZE"."DB__WRITER";
+grant database role "BRONZE"."SC__DOMAIN_C__WRITER" to database role "BRONZE"."SC__DOMAIN_C__OWNER";
+
+create database role if not exists "BRONZE"."SC__DOMAIN_C__READER"
+  comment = 'Read-only access to the schema'
+;
+grant database role "BRONZE"."SC__DOMAIN_C__READER" to database role "BRONZE"."DB__READER";
+grant database role "BRONZE"."SC__DOMAIN_C__READER" to database role "BRONZE"."SC__DOMAIN_C__WRITER";
+
+create database role if not exists "BRONZE"."SC__DOMAIN_C__METADATA"
+  comment = 'Metadata-only access to the schema'
+;
+grant database role "BRONZE"."SC__DOMAIN_C__METADATA" to database role "BRONZE"."DB__METADATA";
+grant database role "BRONZE"."SC__DOMAIN_C__METADATA" to database role "BRONZE"."SC__DOMAIN_C__READER";
+
+-- Silver - Schema - Domain C
+create database role if not exists "SILVER"."SC__DOMAIN_C__OWNER"
+  comment = 'Full access to the schema'
+;
+grant database role "SILVER"."SC__DOMAIN_C__OWNER" to database role "SILVER"."DB__OWNER";
+
+create database role if not exists "SILVER"."SC__DOMAIN_C__WRITER"
+  comment = 'Write access to the schema'
+;
+grant database role "SILVER"."SC__DOMAIN_C__WRITER" to database role "SILVER"."DB__WRITER";
+grant database role "SILVER"."SC__DOMAIN_C__WRITER" to database role "SILVER"."SC__DOMAIN_C__OWNER";
+
+create database role if not exists "SILVER"."SC__DOMAIN_C__READER"
+  comment = 'Read-only access to the schema'
+;
+grant database role "SILVER"."SC__DOMAIN_C__READER" to database role "SILVER"."DB__READER";
+grant database role "SILVER"."SC__DOMAIN_C__READER" to database role "SILVER"."SC__DOMAIN_C__WRITER";
+
+create database role if not exists "SILVER"."SC__DOMAIN_C__METADATA"
+  comment = 'Metadata-only access to the schema'
+;
+grant database role "SILVER"."SC__DOMAIN_C__METADATA" to database role "SILVER"."DB__METADATA";
+grant database role "SILVER"."SC__DOMAIN_C__METADATA" to database role "SILVER"."SC__DOMAIN_C__READER";
+
+-- Gold - Schema - Domain C
+create database role if not exists "GOLD"."SC__DOMAIN_C__OWNER"
+  comment = 'Full access to the schema'
+;
+grant database role "GOLD"."SC__DOMAIN_C__OWNER" to database role "GOLD"."DB__OWNER";
+
+create database role if not exists "GOLD"."SC__DOMAIN_C__WRITER"
+  comment = 'Write access to the schema'
+;
+grant database role "GOLD"."SC__DOMAIN_C__WRITER" to database role "GOLD"."DB__WRITER";
+grant database role "GOLD"."SC__DOMAIN_C__WRITER" to database role "GOLD"."SC__DOMAIN_C__OWNER";
+
+create database role if not exists "GOLD"."SC__DOMAIN_C__READER"
+  comment = 'Read-only access to the schema'
+;
+grant database role "GOLD"."SC__DOMAIN_C__READER" to database role "GOLD"."DB__READER";
+grant database role "GOLD"."SC__DOMAIN_C__READER" to database role "GOLD"."SC__DOMAIN_C__WRITER";
+
+create database role if not exists "GOLD"."SC__DOMAIN_C__METADATA"
+  comment = 'Metadata-only access to the schema'
+;
+grant database role "GOLD"."SC__DOMAIN_C__METADATA" to database role "GOLD"."DB__METADATA";
+grant database role "GOLD"."SC__DOMAIN_C__METADATA" to database role "GOLD"."SC__DOMAIN_C__READER";
+
 --------------------------------------------------
 -- Databases Role Grants to Account Roles
 --------------------------------------------------
@@ -357,19 +472,10 @@ grant database role "GOLD"."DB__OWNER" to role "DATA_PLATFORM_MANAGER";
 grant database role "BRONZE"."SC__DOMAIN_A__OWNER" to role "ENGINEER_DOMAIN_A";
 grant database role "BRONZE"."SC__DOMAIN_A__METADATA" to role "METADATA_DOMAIN_A";
 
--- Bronze - Domain B
-grant database role "BRONZE"."SC__DOMAIN_B__OWNER" to role "ENGINEER_DOMAIN_B";
-grant database role "BRONZE"."SC__DOMAIN_B__METADATA" to role "METADATA_DOMAIN_B";
-
 -- Silver - Domain A
 grant database role "SILVER"."SC__DOMAIN_A__OWNER" to role "ENGINEER_DOMAIN_A";
 grant database role "SILVER"."SC__DOMAIN_A__WRITER" to role "ANALYST_DOMAIN_A";
 grant database role "SILVER"."SC__DOMAIN_A__METADATA" to role "METADATA_DOMAIN_A";
-
--- Silver - Domain B
-grant database role "SILVER"."SC__DOMAIN_B__OWNER" to role "ENGINEER_DOMAIN_B";
-grant database role "SILVER"."SC__DOMAIN_B__WRITER" to role "ANALYST_DOMAIN_B";
-grant database role "SILVER"."SC__DOMAIN_B__METADATA" to role "METADATA_DOMAIN_B";
 
 -- Gold - Domain A
 grant database role "GOLD"."SC__DOMAIN_A__OWNER" to role "ENGINEER_DOMAIN_A";
@@ -377,6 +483,15 @@ grant database role "GOLD"."SC__DOMAIN_A__OWNER" to role "ANALYST_DOMAIN_A";
 grant database role "GOLD"."SC__DOMAIN_A__WRITER" to role "ANALYST_DOMAIN_A";
 grant database role "GOLD"."SC__DOMAIN_A__READER" to role "READER_DOMAIN_A";
 grant database role "GOLD"."SC__DOMAIN_A__METADATA" to role "METADATA_DOMAIN_A";
+
+-- Bronze - Domain B
+grant database role "BRONZE"."SC__DOMAIN_B__OWNER" to role "ENGINEER_DOMAIN_B";
+grant database role "BRONZE"."SC__DOMAIN_B__METADATA" to role "METADATA_DOMAIN_B";
+
+-- Silver - Domain B
+grant database role "SILVER"."SC__DOMAIN_B__OWNER" to role "ENGINEER_DOMAIN_B";
+grant database role "SILVER"."SC__DOMAIN_B__WRITER" to role "ANALYST_DOMAIN_B";
+grant database role "SILVER"."SC__DOMAIN_B__METADATA" to role "METADATA_DOMAIN_B";
 
 -- Gold - Domain B
 grant database role "GOLD"."SC__DOMAIN_B__OWNER" to role "ENGINEER_DOMAIN_B";
@@ -772,3 +887,192 @@ grant USAGE on future file formats in schema "GOLD"."DOMAIN_B" to database role 
 
 -- Gold - Grants - Domain B - Owner
 grant ownership on schema "GOLD"."DOMAIN_B" to database role "GOLD"."SC__DOMAIN_B__OWNER" copy current grants;
+
+-------------------------
+-- Databases roles - Schema-level Grants - Bronze - Domain C
+
+-- Bronze - Grants - Domain C - Metadata
+grant USAGE, MONITOR, create notebook on schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__METADATA";
+
+grant REFERENCES on all tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on all views in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__METADATA";
+grant MONITOR on all dynamic tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on all materialized views in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on all iceberg tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on all external tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__METADATA";
+-- grant REFERENCES on all hybrid tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__METADATA"; -- Not supported at time of writing
+
+grant REFERENCES on future tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on future views in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__METADATA";
+grant MONITOR on future dynamic tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on future materialized views in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on future iceberg tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on future external tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__METADATA";
+-- grant REFERENCES on future hybrid tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__METADATA"; -- Not supported at time of writing
+
+-- Bronze - Grants - Domain C - Reader
+grant SELECT on all tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+grant SELECT on all views in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+grant SELECT on all dynamic tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+grant SELECT on all materialized views in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+grant SELECT on all iceberg tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+grant SELECT on all external tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+-- grant SELECT on all hybrid tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER"; -- Not supported at time of writing
+grant USAGE on all functions in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+grant USAGE on all sequences in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+
+grant SELECT on future tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+grant SELECT on future views in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+grant SELECT on future dynamic tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+grant SELECT on future materialized views in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+grant SELECT on future iceberg tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+grant SELECT on future external tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+-- grant SELECT on future hybrid tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER"; -- Not supported at time of writing
+grant USAGE on future functions in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+grant USAGE on future sequences in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__READER";
+
+-- Bronze - Grants - Domain C - Writer
+grant INSERT, UPDATE, TRUNCATE, DELETE on all tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__WRITER";
+grant OPERATE on all dynamic tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__WRITER";
+grant INSERT, UPDATE, TRUNCATE, DELETE on all iceberg tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__WRITER";
+-- grant INSERT, UPDATE, TRUNCATE, DELETE on all hybrid tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__WRITER"; -- Not supported at time of writing
+grant USAGE on all procedures in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__WRITER";
+grant USAGE on all stages in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__WRITER";
+grant USAGE on all file formats in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__WRITER";
+
+grant INSERT, UPDATE, TRUNCATE, DELETE on future tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__WRITER";
+grant OPERATE on future dynamic tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__WRITER";
+grant INSERT, UPDATE, TRUNCATE, DELETE on future iceberg tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__WRITER";
+-- grant INSERT, UPDATE, TRUNCATE, DELETE on future hybrid tables in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__WRITER"; -- Not supported at time of writing
+grant USAGE on future procedures in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__WRITER";
+grant USAGE on future stages in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__WRITER";
+grant USAGE on future file formats in schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__WRITER";
+
+-- Bronze - Grants - Domain C - Owner
+grant ownership on schema "BRONZE"."DOMAIN_C" to database role "BRONZE"."SC__DOMAIN_C__OWNER" copy current grants;
+
+-------------------------
+-- Databases roles - Schema-level Grants - Silver - Domain C
+
+-- Silver - Grants - Domain C - Metadata
+grant USAGE, MONITOR, create notebook on schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__METADATA";
+
+grant REFERENCES on all tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on all views in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__METADATA";
+grant MONITOR on all dynamic tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on all materialized views in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on all iceberg tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on all external tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__METADATA";
+-- grant REFERENCES on all hybrid tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__METADATA"; -- Not supported at time of writing
+
+grant REFERENCES on future tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on future views in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__METADATA";
+grant MONITOR on future dynamic tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on future materialized views in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on future iceberg tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on future external tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__METADATA";
+-- grant REFERENCES on future hybrid tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__METADATA"; -- Not supported at time of writing
+
+-- Silver - Grants - Domain C - Reader
+grant SELECT on all tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+grant SELECT on all views in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+grant SELECT on all dynamic tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+grant SELECT on all materialized views in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+grant SELECT on all iceberg tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+grant SELECT on all external tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+-- grant SELECT on all hybrid tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER"; -- Not supported at time of writing
+grant USAGE on all functions in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+grant USAGE on all sequences in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+
+grant SELECT on future tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+grant SELECT on future views in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+grant SELECT on future dynamic tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+grant SELECT on future materialized views in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+grant SELECT on future iceberg tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+grant SELECT on future external tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+-- grant SELECT on future hybrid tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER"; -- Not supported at time of writing
+grant USAGE on future functions in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+grant USAGE on future sequences in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__READER";
+
+-- Silver - Grants - Domain C - Writer
+grant INSERT, UPDATE, TRUNCATE, DELETE on all tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__WRITER";
+grant OPERATE on all dynamic tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__WRITER";
+grant INSERT, UPDATE, TRUNCATE, DELETE on all iceberg tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__WRITER";
+-- grant INSERT, UPDATE, TRUNCATE, DELETE on all hybrid tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__WRITER"; -- Not supported at time of writing
+grant USAGE on all procedures in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__WRITER";
+grant USAGE on all stages in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__WRITER";
+grant USAGE on all file formats in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__WRITER";
+
+grant INSERT, UPDATE, TRUNCATE, DELETE on future tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__WRITER";
+grant OPERATE on future dynamic tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__WRITER";
+grant INSERT, UPDATE, TRUNCATE, DELETE on future iceberg tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__WRITER";
+-- grant INSERT, UPDATE, TRUNCATE, DELETE on future hybrid tables in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__WRITER"; -- Not supported at time of writing
+grant USAGE on future procedures in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__WRITER";
+grant USAGE on future stages in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__WRITER";
+grant USAGE on future file formats in schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__WRITER";
+
+-- Silver - Grants - Domain C - Owner
+grant ownership on schema "SILVER"."DOMAIN_C" to database role "SILVER"."SC__DOMAIN_C__OWNER" copy current grants;
+
+-------------------------
+-- Databases roles - Schema-level Grants - Gold - Domain C
+
+-- Gold - Grants - Domain C - Metadata
+grant USAGE, MONITOR, create notebook on schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__METADATA";
+
+grant REFERENCES on all tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on all views in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__METADATA";
+grant MONITOR on all dynamic tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on all materialized views in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on all iceberg tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on all external tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__METADATA";
+-- grant REFERENCES on all hybrid tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__METADATA"; -- Not supported at time of writing
+
+grant REFERENCES on future tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on future views in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__METADATA";
+grant MONITOR on future dynamic tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on future materialized views in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on future iceberg tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__METADATA";
+grant REFERENCES on future external tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__METADATA";
+-- grant REFERENCES on future hybrid tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__METADATA"; -- Not supported at time of writing
+
+-- Gold - Grants - Domain C - Reader
+grant SELECT on all tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+grant SELECT on all views in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+grant SELECT on all dynamic tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+grant SELECT on all materialized views in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+grant SELECT on all iceberg tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+grant SELECT on all external tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+-- grant SELECT on all hybrid tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER"; -- Not supported at time of writing
+grant USAGE on all functions in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+grant USAGE on all sequences in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+
+grant SELECT on future tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+grant SELECT on future views in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+grant SELECT on future dynamic tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+grant SELECT on future materialized views in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+grant SELECT on future iceberg tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+grant SELECT on future external tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+-- grant SELECT on future hybrid tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER"; -- Not supported at time of writing
+grant USAGE on future functions in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+grant USAGE on future sequences in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__READER";
+
+-- Gold - Grants - Domain C - Writer
+grant INSERT, UPDATE, TRUNCATE, DELETE on all tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__WRITER";
+grant OPERATE on all dynamic tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__WRITER";
+grant INSERT, UPDATE, TRUNCATE, DELETE on all iceberg tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__WRITER";
+-- grant INSERT, UPDATE, TRUNCATE, DELETE on all hybrid tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__WRITER"; -- Not supported at time of writing
+grant USAGE on all procedures in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__WRITER";
+grant USAGE on all stages in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__WRITER";
+grant USAGE on all file formats in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__WRITER";
+
+grant INSERT, UPDATE, TRUNCATE, DELETE on future tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__WRITER";
+grant OPERATE on future dynamic tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__WRITER";
+grant INSERT, UPDATE, TRUNCATE, DELETE on future iceberg tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__WRITER";
+-- grant INSERT, UPDATE, TRUNCATE, DELETE on future hybrid tables in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__WRITER"; -- Not supported at time of writing
+grant USAGE on future procedures in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__WRITER";
+grant USAGE on future stages in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__WRITER";
+grant USAGE on future file formats in schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__WRITER";
+
+-- Gold - Grants - Domain C - Owner
+grant ownership on schema "GOLD"."DOMAIN_C" to database role "GOLD"."SC__DOMAIN_C__OWNER" copy current grants;
