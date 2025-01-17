@@ -12,7 +12,7 @@ The example databases and roles were deployed using this script:
 
 The databases that have been deployed are represented here:
 
-![Example Databases and Roles](<images/Example Databases and Roles.png>)
+![Example Databases and Schemas](<images/Example Databases and Schemas.png>)
 
 In short, we have three tiers of database (bronze, silver and gold) which each contain dedicated schemas for three domains: A, B and C.
 
