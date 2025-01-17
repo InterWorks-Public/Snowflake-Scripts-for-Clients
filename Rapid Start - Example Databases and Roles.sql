@@ -463,10 +463,20 @@ grant database role "GOLD"."SC__DOMAIN_C__METADATA" to database role "GOLD"."SC_
 -- Databases Role Grants to Account Roles
 --------------------------------------------------
 
--- Database ownership
-grant database role "BRONZE"."DB__OWNER" to role "DATA_PLATFORM_MANAGER";
-grant database role "SILVER"."DB__OWNER" to role "DATA_PLATFORM_MANAGER";
-grant database role "GOLD"."DB__OWNER" to role "DATA_PLATFORM_MANAGER";
+-- Bronze - Database-level
+grant database role "BRONZE"."DB__OWNER" to role "ENGINEER";
+grant database role "BRONZE"."DB__METADATA" to role "METADATA";
+
+-- Silver - Database-level
+grant database role "SILVER"."DB__OWNER" to role "ENGINEER";
+grant database role "SILVER"."DB__WRITER" to role "ANALYST";
+grant database role "SILVER"."DB__METADATA" to role "METADATA";
+
+-- Gold - Database-level
+grant database role "GOLD"."DB__OWNER" to role "ENGINEER";
+grant database role "GOLD"."DB__OWNER" to role "ANALYST";
+grant database role "GOLD"."DB__READER" to role "READER";
+grant database role "GOLD"."DB__METADATA" to role "METADATA";
 
 -- Bronze - Domain A
 grant database role "BRONZE"."SC__DOMAIN_A__OWNER" to role "ENGINEER_DOMAIN_A";
@@ -480,7 +490,6 @@ grant database role "SILVER"."SC__DOMAIN_A__METADATA" to role "METADATA_DOMAIN_A
 -- Gold - Domain A
 grant database role "GOLD"."SC__DOMAIN_A__OWNER" to role "ENGINEER_DOMAIN_A";
 grant database role "GOLD"."SC__DOMAIN_A__OWNER" to role "ANALYST_DOMAIN_A";
-grant database role "GOLD"."SC__DOMAIN_A__WRITER" to role "ANALYST_DOMAIN_A";
 grant database role "GOLD"."SC__DOMAIN_A__READER" to role "READER_DOMAIN_A";
 grant database role "GOLD"."SC__DOMAIN_A__METADATA" to role "METADATA_DOMAIN_A";
 
@@ -496,7 +505,6 @@ grant database role "SILVER"."SC__DOMAIN_B__METADATA" to role "METADATA_DOMAIN_B
 -- Gold - Domain B
 grant database role "GOLD"."SC__DOMAIN_B__OWNER" to role "ENGINEER_DOMAIN_B";
 grant database role "GOLD"."SC__DOMAIN_B__OWNER" to role "ANALYST_DOMAIN_B";
-grant database role "GOLD"."SC__DOMAIN_B__WRITER" to role "ANALYST_DOMAIN_B";
 grant database role "GOLD"."SC__DOMAIN_B__READER" to role "READER_DOMAIN_B";
 grant database role "GOLD"."SC__DOMAIN_B__METADATA" to role "METADATA_DOMAIN_B";
 
