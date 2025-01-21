@@ -22,7 +22,10 @@
 use role "SYSADMIN";
 
 create warehouse if not exists "WH_ADMIN"
-  comment = 'Warehouse for admin-level activities'
+  warehouse_size = 'XSMALL'
+  auto_suspend = 120
+  initially_suspended = TRUE
+  comment = 'Used for generic low-effort processes performed by admin roles'
 ;
 grant usage on warehouse "WH_ADMIN" to role "SECURITYADMIN";
 
