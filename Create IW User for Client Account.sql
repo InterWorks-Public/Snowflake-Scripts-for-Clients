@@ -63,6 +63,7 @@ alter user identifier($username) set
   last_name = $last_name
   comment = $comment
   must_change_password = TRUE
+  type = 'PERSON'
 ;
 
 -- Grant SECURITYADMIN access
